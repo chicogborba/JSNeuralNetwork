@@ -12,9 +12,13 @@ class Car{
     this.angle=0;
     this.damaged=false;
 
+    this.useBrain = controlType == "AI";
+
 
     if(controlType!="DUMMY"){
-    this.sensor= new Sensor(this);
+      this.sensor= new Sensor(this);
+      this.brain = new NeuralNetwork(
+        [this.sensor.rayCount,6,4]);
   }
     this.controls = new Controls(controlType);
 }
@@ -27,6 +31,18 @@ class Car{
     }
     if(this.sensor){
       this.sensor.update(roadBorders,trafic);
+      const offset = this.sensor.readings.map((reading)=>{
+        reading == null ? 0 : 1-reading.offset;
+      });
+      const output = NeuralNetwork.feedForward(offset, this.brain);
+
+      if(this.useBrain){
+        this.controls.forward = output[0]
+        this.controls.left = output[1]
+        this.controls.right = output[2]
+        this.controls.reverse = output[3]
+
+      }
     }
   }
 
