@@ -1,5 +1,5 @@
 class Car{
-  constructor(x,y,width,height){
+  constructor(x,y,width,height,controlType, maxSpeed=3){
     this.x = x;
     this.y = y;
     this.width = width;
@@ -7,31 +7,42 @@ class Car{
 
     this.speed=0;
     this.acceleration=0.2;
-    this.maxSpeed=5;
+    this.maxSpeed=maxSpeed;
     this.friction=0.05;
     this.angle=0;
     this.damaged=false;
 
 
-this.sensor= new Sensor(this);
-    this.controls = new Controls()
+    if(controlType!="DUMMY"){
+    this.sensor= new Sensor(this);
   }
+    this.controls = new Controls(controlType);
+}
 
-  update(roadBorders){
+  update(roadBorders, trafic){
     if(!this.damaged){
     this.#mover();
     this.polygon = this.#createPolygon();
-    this.damaged = this.#assessDamage(roadBorders);
+    this.damaged = this.#assessDamage(roadBorders,trafic);
     }
-    this.sensor.update(roadBorders);
+    if(this.sensor){
+      this.sensor.update(roadBorders,trafic);
+    }
   }
 
-  #assessDamage(roadBorders){
+  #assessDamage(roadBorders,trafic){
     for(let i=0;i<roadBorders.length;i++){
       if(polysIntersect(this.polygon,roadBorders[i])){
         return true;
       }
     }
+
+    for(let i=0;i<trafic.length;i++){
+      if(polysIntersect(trafic[i].polygon,this.polygon)){
+        return true;
+      }
+    }
+
     return false;
   }
 
@@ -104,12 +115,12 @@ this.sensor= new Sensor(this);
   }
     
 
-  draw(ctx){
+  draw(ctx, color){
 
     if(this.damaged){
       ctx.fillStyle='red';
     }else{
-      ctx.fillStyle='green';
+      ctx.fillStyle=color;
     }
 
     ctx.beginPath();
@@ -119,7 +130,9 @@ this.sensor= new Sensor(this);
     }
     ctx.fill();
 
+    if(this.sensor){
     this.sensor.draw(ctx);
+    }
   }
   
 }
